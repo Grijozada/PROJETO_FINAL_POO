@@ -1,50 +1,40 @@
-# Prerequisites
+# Arquivos de dependência
 *.d
 
-# Compiled Object files
+# Objetos compilados
 *.slo
 *.lo
 *.o
 *.obj
 
-# Precompiled Headers
+# Headers pré-compilados
 *.gch
 *.pch
 
-# Linker files
+# Arquivos de linker/debug
 *.ilk
-
-# Debugger Files
 *.pdb
+*.dwo
 
-# Compiled Dynamic libraries
+# Bibliotecas
 *.so
 *.dylib
 *.dll
 *.so.*
-
-
-# Fortran module files
-*.mod
-*.smod
-
-# Compiled Static libraries
 *.lai
 *.la
 *.a
 *.lib
 
-# Executables
+# Executáveis
 *.exe
 *.out
 *.app
 
-# Build directories
+# Build
 build/
 Build/
 build-*/
-
-# CMake generated files
 CMakeFiles/
 CMakeCache.txt
 cmake_install.cmake
@@ -52,18 +42,33 @@ Makefile
 install_manifest.txt
 compile_commands.json
 
-# Temporary files
+# Arquivos temporários
 *.tmp
 *.log
 *.bak
 *.swp
 
-# vcpkg
-vcpkg_installed/
+# Python
+__pycache__/
+*.pyc
 
-# debug information files
-*.dwo
+# Streamlit
+.streamlit/
 
-# test output & cache
+# VS Code
+.vscode/
+
+# Banco e histórico gerados pelo supervisor
+supervisor_python/database/*.db
+supervisor_python/database/*.csv
+
+# Windows
+Thumbs.db
+Desktop.ini
+
+# Testes/cache
 Testing/
 .cache/
+
+# vcpkg
+vcpkg_installed/

@@ -1,0 +1,46 @@
+name: CI - Mini SCADA
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build-and-test:
+    runs-on: windows-latest
+
+    steps:
+      - name: Baixar repositório
+        uses: actions/checkout@v4
+
+      - name: Configurar MinGW
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          install: mingw-w64-x86_64-gcc
+
+      - name: Compilar dispositivo
+        shell: msys2 {0}
+        run: |
+          g++ dispositivo_cpp/src/main.cpp \
+              dispositivo_cpp/src/Bomba.cpp \
+              dispositivo_cpp/src/Alarme.cpp \
+              dispositivo_cpp/src/EstacaoBombeamento.cpp \
+              dispositivo_cpp/src/ControlePadrao.cpp \
+              dispositivo_cpp/src/JsonExporter.cpp \
+              -o dispositivo_cpp/estacao.exe
+
+      - name: Compilar testes
+        shell: msys2 {0}
+        run: |
+          g++ dispositivo_cpp/tests/test_regras.cpp \
+              dispositivo_cpp/src/Bomba.cpp \
+              dispositivo_cpp/src/Alarme.cpp \
+              dispositivo_cpp/src/EstacaoBombeamento.cpp \
+              dispositivo_cpp/src/ControlePadrao.cpp \
+              -o dispositivo_cpp/tests/test_regras.exe
+
+      - name: Executar testes
+        shell: msys2 {0}
+        run: |
+          ./dispositivo_cpp/tests/test_regras.exe
