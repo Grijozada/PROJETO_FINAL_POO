@@ -1,0 +1,10 @@
+{
+  "estacao": "EB-161",
+  "nivel": 25,
+  "temperatura": 35,
+  "qualidade_agua": 90,
+  "bomba_principal": "BLOQUEADA",
+  "alarme_nivel_baixo": 1,
+  "alarme_temperatura_alta": 0,
+  "alarme_qualidade_ruim": 0
+}

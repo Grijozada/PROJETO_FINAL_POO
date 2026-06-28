@@ -1,0 +1,3 @@
+estacao,nivel,temperatura,qualidade_agua,bomba_principal,alarme_nivel_baixo,alarme_temperatura_alta,alarme_qualidade_ruim,timestamp
+EB-161,25,35,90,BLOQUEADA,1,0,0,2026-06-27 15:27:45
+EB-161,25,35,90,BLOQUEADA,1,0,0,2026-06-27 15:40:24
