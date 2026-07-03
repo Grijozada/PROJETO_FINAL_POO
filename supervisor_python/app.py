@@ -3,9 +3,10 @@ import os
 import sqlite3
 from pathlib import Path
 
-from streamlit_autorefresh import st_autorefresh
 import pandas as pd
+import plotly.express as px
 import streamlit as st
+from streamlit_autorefresh import st_autorefresh
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -25,8 +26,11 @@ auto_update = st.sidebar.checkbox("Atualização automática", value=True)
 if auto_update:
     st_autorefresh(interval=25000, key="refresh")
 
-st.title("💧 Mini-SCADA - Estação de Bombeamento EB-161")
-st.caption("Sistema supervisório para monitoramento de sensores, bombas, alarmes e histórico operacional.")
+st.title("💧 Mini-SCADA EB-161")
+st.caption(
+    "Sistema supervisório para estação de bombeamento com sensores, bombas, alarmes, "
+    "histórico em CSV/SQLite e registro de comandos."
+)
 
 if not os.path.exists(CAMINHO_JSON):
     st.error("Arquivo JSON ainda não foi gerado pelo dispositivo C++.")
@@ -141,6 +145,7 @@ st.sidebar.write(f"**Estação:** {dados['estacao']}")
 st.sidebar.write("**ID da dupla:** 161")
 st.sidebar.write("**Comunicação:** JSON")
 st.sidebar.write("**Persistência:** CSV + SQLite")
+st.sidebar.write(f"**Última leitura:** {dados['timestamp']}")
 
 st.sidebar.header("⚙️ Limites de controle")
 st.sidebar.write("Nível baixo: < 31%")
@@ -162,6 +167,24 @@ col3.metric("Qualidade da água", f"{dados['qualidade_agua']} IQA")
 col4.metric("Bomba principal", dados["bomba_principal"])
 
 # =========================
+# RESUMO OPERACIONAL
+# =========================
+
+alarmes_ativos = (
+    int(dados["alarme_nivel_baixo"])
+    + int(dados["alarme_temperatura_alta"])
+    + int(dados["alarme_qualidade_ruim"])
+)
+
+st.subheader("🏭 Resumo operacional")
+
+r1, r2, r3 = st.columns(3)
+
+r1.metric("Alarmes ativos", alarmes_ativos)
+r2.metric("Registros CSV", len(df_historico))
+r3.metric("Registros SQLite", len(df_sqlite))
+
+# =========================
 # ABAS
 # =========================
 
@@ -175,52 +198,90 @@ aba1, aba2, aba3, aba4 = st.tabs([
 with aba1:
     st.subheader("Tabela de leituras atuais")
     df_atual = pd.DataFrame([dados])
-    st.dataframe(df_atual, use_container_width=True)
+    st.dataframe(df_atual, width="stretch")
 
     st.subheader("Histórico em CSV")
-    st.dataframe(df_historico, use_container_width=True)
+    st.dataframe(df_historico.tail(100), width="stretch")
 
     st.subheader("Histórico em SQLite")
-    st.dataframe(df_sqlite, use_container_width=True)
+    st.dataframe(df_sqlite.tail(100), width="stretch")
 
 with aba2:
-    st.subheader("Gráfico histórico das variáveis")
+    st.subheader("📈 Histórico das variáveis da estação")
 
-    col_graf1, col_graf2 = st.columns(2)
+    df_grafico = df_historico.copy()
+    df_grafico["timestamp"] = pd.to_datetime(df_grafico["timestamp"], errors="coerce")
+    df_grafico = df_grafico.dropna(subset=["timestamp"])
 
-    with col_graf1:
-        st.write("Nível da água e Temperatura")
-        grafico_1 = df_historico[["timestamp", "nivel", "temperatura"]].copy()
-        grafico_1 = grafico_1.set_index("timestamp")
-        st.line_chart(grafico_1)
+    if len(df_grafico) < 2:
+        st.warning("Ainda há poucos dados para formar gráficos.")
+    else:
+        fig1 = px.line(
+            df_grafico,
+            x="timestamp",
+            y=["nivel", "temperatura"],
+            title="Nível da água e temperatura ao longo do tempo",
+            labels={
+                "timestamp": "Horário",
+                "value": "Valor",
+                "variable": "Variável"
+            }
+        )
+        st.plotly_chart(fig1, width="stretch")
 
-    with col_graf2:
-        st.write("Qualidade da água")
-        grafico_2 = df_historico[["timestamp", "qualidade_agua"]].copy()
-        grafico_2 = grafico_2.set_index("timestamp")
-        st.line_chart(grafico_2)
+        fig2 = px.line(
+            df_grafico,
+            x="timestamp",
+            y="qualidade_agua",
+            title="Qualidade da água ao longo do tempo",
+            labels={
+                "timestamp": "Horário",
+                "qualidade_agua": "Qualidade da água (IQA)"
+            }
+        )
+        st.plotly_chart(fig2, width="stretch")
 
 with aba3:
     st.subheader("Lista de alarmes")
 
-    alarmes = {
-        "Nível baixo": dados["alarme_nivel_baixo"],
-        "Temperatura alta": dados["alarme_temperatura_alta"],
-        "Qualidade da água ruim": dados["alarme_qualidade_ruim"],
-    }
+    alarmes = [
+        {
+            "alarme": "Nível baixo",
+            "ativo": int(dados["alarme_nivel_baixo"]),
+            "prioridade": "Alta"
+        },
+        {
+            "alarme": "Temperatura alta",
+            "ativo": int(dados["alarme_temperatura_alta"]),
+            "prioridade": "Média"
+        },
+        {
+            "alarme": "Qualidade da água ruim",
+            "ativo": int(dados["alarme_qualidade_ruim"]),
+            "prioridade": "Alta"
+        }
+    ]
 
-    for nome, ativo in alarmes.items():
-        if ativo:
-            st.error(f"🔴 ALARME ATIVO: {nome}")
+    for alarme in alarmes:
+        if alarme["ativo"]:
+            st.error(f"🔴 ALARME ATIVO: {alarme['alarme']} | Prioridade: {alarme['prioridade']}")
         else:
-            st.success(f"🟢 Normal: {nome}")
+            st.success(f"🟢 Normal: {alarme['alarme']}")
+
+    st.dataframe(pd.DataFrame(alarmes), width="stretch")
 
 with aba4:
     st.subheader("Histórico de comandos")
 
-    st.dataframe(df_comandos, use_container_width=True)
+    st.dataframe(df_comandos.tail(100), width="stretch")
 
     st.info(
         "Os comandos são registrados a partir do estado operacional gerado pelo dispositivo C++. "
-        "Em uma versão futura, esses comandos poderiam ser enviados diretamente do supervisor para o dispositivo."
+        "Em uma aplicação industrial real, esses comandos poderiam ser enviados diretamente "
+        "do supervisor para o controlador."
     )
+
+st.caption(
+    "Projeto acadêmico de Programação Orientada a Objetos | Professor Rafael Emerick | "
+    "Gustavo Grijó e Victor"
+)
