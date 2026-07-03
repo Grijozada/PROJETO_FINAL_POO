@@ -1,50 +1,38 @@
 #include <iostream>
+#include <windows.h>
+#include <cmath>
+
 #include "../include/EstacaoBombeamento.h"
 #include "../include/ControlePadrao.h"
-#include "../include/LigarBombaCommand.h"
-#include "../include/DesligarBombaCommand.h"
-#include "../include/ResetarAlarmesCommand.h"
-#include "../include/ModoManutencaoCommand.h"
-#include <fstream>
 #include "../include/JsonExporter.h"
 
 int main()
 {
-    EstacaoBombeamento estacao;
     ControlePadrao controle;
 
-    estacao.setEstrategia(&controle);
+    int ciclo = 0;
 
-    estacao.getSensorNivel().setValor(25);
-    estacao.getSensorTemperatura().setValor(35);
-    estacao.getSensorQualidadeAgua().setValor(90);
+    while (true)
+    {
+        EstacaoBombeamento estacao;
+        estacao.setEstrategia(&controle);
 
-    estacao.executarControle();
+        float nivel = 50 + 35 * std::sin(ciclo * 0.25);
+        float temperatura = 45 + 25 * std::sin(ciclo * 0.15);
+        float qualidade = 85 - 20 * std::sin(ciclo * 0.18);
 
-    std::cout << "Status da bomba principal: "
-              << estacao.getBombaPrincipal().getStatus()
-              << std::endl;
+        estacao.getSensorNivel().setValor(nivel);
+        estacao.getSensorTemperatura().setValor(temperatura);
+        estacao.getSensorQualidadeAgua().setValor(qualidade);
 
-    std::cout << "Alarme de nivel baixo ativo? "
-              << estacao.getAlarmeNivelBaixo().estaAtivo()
-              << std::endl;
+        estacao.executarControle();
 
-        DesligarBombaCommand comandoDesligar(estacao.getBombaPrincipal());
-    comandoDesligar.executar();
-
-    std::cout << "Status apos comando desligar: "
-              << estacao.getBombaPrincipal().getStatus()
-              << std::endl;
-
-    ModoManutencaoCommand comandoManutencao(estacao);
-    comandoManutencao.executar();
-
-    std::cout << "Status apos modo manutencao: "
-              << estacao.getBombaPrincipal().getStatus()
-              << std::endl;
         JsonExporter::salvar(estacao, "dispositivo_cpp/dados_estacao.json");
 
-    std::cout << "JSON gerado em dispositivo_cpp/dados_estacao.json" << std::endl;          
-    return 0;
+        ciclo++;
 
+        Sleep(2000);
+    }
+
+    return 0;
 }

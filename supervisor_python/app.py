@@ -1,9 +1,9 @@
 import json
 import os
 import sqlite3
-from datetime import datetime
 from pathlib import Path
 
+from streamlit_autorefresh import st_autorefresh
 import pandas as pd
 import streamlit as st
 
@@ -20,6 +20,11 @@ st.set_page_config(
     layout="wide"
 )
 
+auto_update = st.sidebar.checkbox("Atualização automática", value=True)
+
+if auto_update:
+    st_autorefresh(interval=25000, key="refresh")
+
 st.title("💧 Mini-SCADA - Estação de Bombeamento EB-161")
 st.caption("Sistema supervisório para monitoramento de sensores, bombas, alarmes e histórico operacional.")
 
@@ -29,8 +34,6 @@ if not os.path.exists(CAMINHO_JSON):
 
 with open(CAMINHO_JSON, "r", encoding="utf-8") as arquivo:
     dados = json.load(arquivo)
-
-dados["timestamp"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 CAMINHO_CSV.parent.mkdir(parents=True, exist_ok=True)
 
