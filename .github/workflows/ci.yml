@@ -6,6 +6,7 @@ on:
 
 jobs:
   build-and-test:
+    name: Compilar e testar C++
     runs-on: windows-latest
 
     steps:
@@ -15,14 +16,59 @@ jobs:
       - name: Instalar MinGW
         run: choco install mingw -y
 
-      - name: Compilar dispositivo
-        run: |
-          g++ dispositivo_cpp/src/main.cpp dispositivo_cpp/src/Bomba.cpp dispositivo_cpp/src/Alarme.cpp dispositivo_cpp/src/EstacaoBombeamento.cpp dispositivo_cpp/src/ControlePadrao.cpp dispositivo_cpp/src/JsonExporter.cpp -o dispositivo_cpp/estacao.exe
+      - name: Verificar compilador
+        run: g++ --version
 
-      - name: Compilar testes
+      - name: Criar pasta de build
         run: |
-          g++ dispositivo_cpp/tests/test_regras.cpp dispositivo_cpp/src/Bomba.cpp dispositivo_cpp/src/Alarme.cpp dispositivo_cpp/src/EstacaoBombeamento.cpp dispositivo_cpp/src/ControlePadrao.cpp -o dispositivo_cpp/tests/test_regras.exe
+          mkdir dispositivo_cpp\build
 
-      - name: Executar testes
+      - name: Compilar dispositivo C++
         run: |
-          dispositivo_cpp/tests/test_regras.exe
+          g++ -std=c++11 -Wall -Wextra -pedantic ^
+          dispositivo_cpp/src/main.cpp ^
+          dispositivo_cpp/src/Bomba.cpp ^
+          dispositivo_cpp/src/Alarme.cpp ^
+          dispositivo_cpp/src/EstacaoBombeamento.cpp ^
+          dispositivo_cpp/src/ControlePadrao.cpp ^
+          dispositivo_cpp/src/JsonExporter.cpp ^
+          dispositivo_cpp/src/SimuladorSensores.cpp ^
+          -o dispositivo_cpp/build/estacao.exe
+
+      - name: Compilar testes C++
+        run: |
+          g++ -std=c++11 -Wall -Wextra -pedantic ^
+          dispositivo_cpp/tests/test_regras.cpp ^
+          dispositivo_cpp/src/Bomba.cpp ^
+          dispositivo_cpp/src/Alarme.cpp ^
+          dispositivo_cpp/src/EstacaoBombeamento.cpp ^
+          dispositivo_cpp/src/ControlePadrao.cpp ^
+          dispositivo_cpp/src/JsonExporter.cpp ^
+          dispositivo_cpp/src/SimuladorSensores.cpp ^
+          -o dispositivo_cpp/build/test_regras.exe
+
+      - name: Executar testes C++
+        run: |
+          dispositivo_cpp\build\test_regras.exe
+
+  python-check:
+    name: Verificar supervisor Python
+    runs-on: windows-latest
+
+    steps:
+      - name: Baixar repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Instalar dependencias Python
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install streamlit pandas plotly streamlit-autorefresh
+
+      - name: Verificar sintaxe do supervisor
+        run: |
+          python -m py_compile supervisor_python/app.py
