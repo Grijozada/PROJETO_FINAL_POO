@@ -13,43 +13,20 @@ jobs:
       - name: Baixar repositorio
         uses: actions/checkout@v4
 
-      - name: Instalar MinGW
-        run: choco install mingw -y
-
       - name: Verificar compilador
         run: g++ --version
 
       - name: Criar pasta de build
-        run: |
-          mkdir dispositivo_cpp\build
+        run: mkdir dispositivo_cpp\build
 
       - name: Compilar dispositivo C++
-        run: |
-          g++ -std=c++11 -Wall -Wextra -pedantic ^
-          dispositivo_cpp/src/main.cpp ^
-          dispositivo_cpp/src/Bomba.cpp ^
-          dispositivo_cpp/src/Alarme.cpp ^
-          dispositivo_cpp/src/EstacaoBombeamento.cpp ^
-          dispositivo_cpp/src/ControlePadrao.cpp ^
-          dispositivo_cpp/src/JsonExporter.cpp ^
-          dispositivo_cpp/src/SimuladorSensores.cpp ^
-          -o dispositivo_cpp/build/estacao.exe
+        run: g++ -std=c++11 -Wall -Wextra -pedantic dispositivo_cpp/src/main.cpp dispositivo_cpp/src/Bomba.cpp dispositivo_cpp/src/Alarme.cpp dispositivo_cpp/src/EstacaoBombeamento.cpp dispositivo_cpp/src/ControlePadrao.cpp dispositivo_cpp/src/JsonExporter.cpp dispositivo_cpp/src/SimuladorSensores.cpp -o dispositivo_cpp/build/estacao.exe
 
       - name: Compilar testes C++
-        run: |
-          g++ -std=c++11 -Wall -Wextra -pedantic ^
-          dispositivo_cpp/tests/test_regras.cpp ^
-          dispositivo_cpp/src/Bomba.cpp ^
-          dispositivo_cpp/src/Alarme.cpp ^
-          dispositivo_cpp/src/EstacaoBombeamento.cpp ^
-          dispositivo_cpp/src/ControlePadrao.cpp ^
-          dispositivo_cpp/src/JsonExporter.cpp ^
-          dispositivo_cpp/src/SimuladorSensores.cpp ^
-          -o dispositivo_cpp/build/test_regras.exe
+        run: g++ -std=c++11 -Wall -Wextra -pedantic dispositivo_cpp/tests/test_regras.cpp dispositivo_cpp/src/Bomba.cpp dispositivo_cpp/src/Alarme.cpp dispositivo_cpp/src/EstacaoBombeamento.cpp dispositivo_cpp/src/ControlePadrao.cpp dispositivo_cpp/src/JsonExporter.cpp dispositivo_cpp/src/SimuladorSensores.cpp -o dispositivo_cpp/build/test_regras.exe
 
       - name: Executar testes C++
-        run: |
-          dispositivo_cpp\build\test_regras.exe
+        run: dispositivo_cpp\build\test_regras.exe
 
   python-check:
     name: Verificar supervisor Python
@@ -70,5 +47,4 @@ jobs:
           python -m pip install streamlit pandas plotly streamlit-autorefresh
 
       - name: Verificar sintaxe do supervisor
-        run: |
-          python -m py_compile supervisor_python/app.py
+        run: python -m py_compile supervisor_python/app.py
